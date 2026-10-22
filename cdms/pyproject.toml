@@ -1,0 +1,18 @@
+[project]
+name = "cdms"
+version = "0.1.0"
+description = "Change Data Management Service: stores only new inventory data (poll, webhook, Excel upload)"
+requires-python = ">=3.12"
+dependencies = [
+    "apscheduler>=3.10,<4",
+    "fastapi[standard]>=0.159.1",
+    "httpx>=0.28.1",
+    "openpyxl>=3.1.5",
+    "pandas>=3.1.0",
+    "psycopg[binary]>=3.3.6",
+    "sqlmodel>=0.0.48",
+    "tenacity>=9.2.1",
+]
+
+[tool.uv]
+package = false

@@ -1,26 +1,16 @@
 <!-- fullWidth: false tocVisible: false tableWrap: true -->
 # prelimary job test API
 
-FastAPI project managed with [uv](https://docs.astral.sh/uv/).
+## Structure
 
-## Run locally
+CDMS có 3 đầu input:
 
-```bash
-uv sync
-uv run fastapi dev app/main.py
-```
+- webhook: client đẩy json vào
+- excel: client upload file vào
+- Poll: Cmds tự gọi api get product của vietful sau mỗi 15 giây
 
-Open http://localhost:8000/docs
+3 service chính:
 
-## Run with Docker
-
-```bash
-docker compose up --build
-```
-
-## Add dependencies
-
-```bash
-uv add <package>          # dependency
-uv add --dev <package>    # dev dependency
-```
+- vietful_emulator: giả lập kho hàng bằng faker, có api danh sách sản phẩm để CMDS poll và api để tạo thay đổi
+- CDMS: nhận dữ liệu qua 3 cơ chế (poll, webhook, Excel), so hash để chỉ lưu dữ liệu mới vào Postgres theo kiểu exactly-once, và chịu được khi một service khác gặp sự cố.
+- clients: chứa script giả lập hệ thống bên ngoài đẩy dữ liệu vào CDMS, gồm webhook và upload Excel ( chứa script chạy ngoài docker, không phải service )

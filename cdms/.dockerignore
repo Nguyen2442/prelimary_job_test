@@ -1,10 +1,7 @@
 .venv
-.git
-.gitignore
 __pycache__
 *.pyc
 .pytest_cache
 .ruff_cache
 .env
 Dockerfile
-docker-compose.yml

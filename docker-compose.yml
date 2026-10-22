@@ -1,15 +1,54 @@
 services:
-  api:
-    build: .
-    container_name: prelimary-job-api
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cdms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cdms_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-cdms_db}
     ports:
-      - "${API_PORT:-8000}:8000"
-    env_file:
-      - path: .env
-        required: false
+      - "${POSTGRES_PORT:-15433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 5s
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  vietful:
+    build: ./vietful_emulator
+    environment:
+      VIETFUL_INITIAL_PRODUCTS: ${VIETFUL_INITIAL_PRODUCTS:-50}
+    ports:
+      - "${VIETFUL_PORT:-18001}:18001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:18001/health')"]
+      interval: 10s
+      timeout: 3s
       retries: 3
+
+  cdms:
+    build: ./cdms
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cdms_user}:${POSTGRES_PASSWORD:-cdms_pass}@postgres:5432/${POSTGRES_DB:-cdms_db}
+      VIETFUL_BASE_URL: http://vietful:18001
+      POLL_ENABLED: ${POLL_ENABLED:-true}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-15}
+    ports:
+      - "${CDMS_PORT:-18000}:18000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vietful:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:18000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  pgdata:
